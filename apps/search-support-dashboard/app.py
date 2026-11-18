@@ -3,9 +3,12 @@
 Run locally:   streamlit run app.py
 Regenerate:    python generate_data.py --seed 42
 """
+from pathlib import Path
+
 import streamlit as st
 
-st.set_page_config(page_title="Search & Support Effectiveness", page_icon="🔎", layout="wide",
+ASSETS = Path(__file__).parent / "assets"
+st.set_page_config(page_title="Search & Support Effectiveness", page_icon=str(ASSETS / "icon.svg"), layout="wide",
                    initial_sidebar_state="expanded")
 
 from dashboard import theme as T  # noqa: E402  (after set_page_config)
@@ -13,6 +16,7 @@ from dashboard.data import build_context, load_data  # noqa: E402
 from dashboard.views import agents, content_gaps, executive, explorer, search_performance  # noqa: E402
 
 T.apply_style()
+st.logo(str(ASSETS / "logo.svg"), size="large", icon_image=str(ASSETS / "icon.svg"))
 tables = load_data()
 st.session_state["ctx"] = build_context(tables)
 

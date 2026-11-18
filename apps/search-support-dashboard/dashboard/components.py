@@ -44,15 +44,20 @@ def delta(kind: str, v, pv, better: str) -> tuple[str, str]:
     return text, "good" if good else "bad"
 
 
+ACCENT_CYCLE = [T.INDIGO, T.CYAN, T.ROSE, T.AMBER, T.EMERALD]
+
+
 def render_kpis(specs: list[dict], k: dict, pk: dict | None, prev_label: str, sparks: dict | None = None) -> None:
-    """specs: dicts with key, label, kind, better, desc."""
+    """specs: dicts with key, label, kind, better, desc and optional accent / icon."""
     cols = st.columns(len(specs), gap="small")
-    for col, sp in zip(cols, specs):
+    for i, (col, sp) in enumerate(zip(cols, specs)):
+        accent = sp.get("accent", ACCENT_CYCLE[i % len(ACCENT_CYCLE)])
         v = k.get(sp["key"])
         val, unit = fmt_value(sp["kind"], v)
         txt, tone = delta(sp["kind"], v, pk.get(sp["key"]) if pk else None, sp["better"])
         foot = f"vs {prev_label}" if txt else sp["desc"]
         spark = ""
         if sparks and sp["key"] in sparks:
-            spark = T.sparkline(sparks[sp["key"]], T.BLUE)
-        col.markdown(T.kpi_card(sp["label"], val, unit, txt, tone, foot, spark), unsafe_allow_html=True)
+            spark = T.sparkline(sparks[sp["key"]], accent)
+        col.markdown(T.kpi_card(sp["label"], val, unit, txt, tone, foot, spark, accent=accent,
+                                ico=sp.get("icon", "activity"), delay=i * 0.05), unsafe_allow_html=True)

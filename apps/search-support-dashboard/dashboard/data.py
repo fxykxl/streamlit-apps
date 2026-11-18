@@ -105,8 +105,14 @@ def build_context(t: dict[str, pd.DataFrame]) -> Ctx:
     lo, hi = s["date"].min(), s["date"].max()
     all_areas = sorted(s["product_area"].unique())
 
+    from . import theme as T  # local import: theme has no dependency on data
+
+    def _reset() -> None:
+        st.session_state.update(f_period="Full period", f_user=next(iter(USER_OPTIONS)), f_areas=[])
+        st.session_state.pop("f_dates", None)
+
     with st.sidebar:
-        st.markdown("#### Filters")
+        st.markdown(f'<div class="side-h">{T.icon("sliders", 14)}Filters</div>', unsafe_allow_html=True)
         preset = st.selectbox("Period", ["Full period", "Last 90 days", "Last 30 days", "Custom range"],
                               key="f_period")
         start, end = lo, hi
@@ -124,7 +130,11 @@ def build_context(t: dict[str, pd.DataFrame]) -> Ctx:
         who = st.radio("Who is searching", list(USER_OPTIONS), key="f_user")
         picked_areas = st.multiselect("Product area", all_areas, default=[], placeholder="All product areas",
                                       key="f_areas")
-        st.caption("Synthetic data for a fictional company. Agents' view ignores the 'who' filter.")
+        active = preset != "Full period" or bool(picked_areas) or USER_OPTIONS[who] is not None
+        st.button("Reset filters", icon=":material/restart_alt:", on_click=_reset, disabled=not active,
+                  width="stretch", key="f_reset")
+        st.markdown('<div class="side-note">Synthetic data for a fictional company. The agent page always shows '
+                    'support agents, whatever “Who is searching” says.</div>', unsafe_allow_html=True)
 
     areas = picked_areas or all_areas
     user = USER_OPTIONS[who]
