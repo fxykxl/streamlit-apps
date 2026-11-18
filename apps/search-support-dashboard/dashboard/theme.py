@@ -191,7 +191,7 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
 .hero {{ position: relative; overflow: hidden; border-radius: 20px; padding: 24px 28px 20px; margin: 0 0 12px;
   border: 1px solid {rgba(INDIGO, .28)};
   background: linear-gradient(120deg, {rgba(INDIGO, .22)} 0%, {rgba(CYAN, .07)} 55%, {rgba(PINK, .09)} 100%), {SURFACE};
-  box-shadow: 0 20px 50px -30px {rgba(INDIGO, .7)}; animation: fadeUp .5s var(--ease) both; }}
+  box-shadow: 0 16px 36px -30px {rgba(INDIGO, .55)}; animation: fadeUp .5s var(--ease) both; }}
 .hero::before {{ content: ""; position: absolute; right: -90px; top: -130px; width: 360px; height: 360px;
   background: radial-gradient(circle, {rgba(CYAN, .22)}, transparent 68%); pointer-events: none; }}
 .hero::after {{ content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .4;
@@ -210,7 +210,7 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
   background: {rgba(PAGE, .55)}; }}
 
 /* ---------- section heading ---------- */
-.sec {{ display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 10px 0 -8px; }}
+.sec {{ display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 18px 0 -4px; }}
 .sec .ico {{ width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; }}
 .sec .t {{ font-size: 18px; font-weight: 750; color: {INK}; letter-spacing: -.01em; }}
 .sec .s {{ font-size: 13px; color: {MUTED}; }}
@@ -261,7 +261,7 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
 .chead .csub {{ font-size: 12.5px; color: {MUTED}; margin: 3px 0 0; line-height: 1.45; }}
 
 /* ---------- insight cards ---------- */
-.insight {{ --accent: {INDIGO}; position: relative; min-height: 172px; margin-bottom: 12px; border-radius: 18px; padding: 18px 18px 16px;
+.insight {{ --accent: {INDIGO}; position: relative; min-height: 172px; margin-bottom: 22px; border-radius: 18px; padding: 18px 18px 16px;
   background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 16%, {SURFACE}) 0%, {SURFACE} 70%);
   border: 1px solid color-mix(in srgb, var(--accent) 26%, {BORDER});
   transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
@@ -286,6 +286,26 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
 [data-testid="stTab"][aria-selected="true"] p {{ color: #fff !important; font-weight: 650; }}
 [data-testid="stTabs"] .react-aria-SelectionIndicator {{ display: none; }}
 [data-testid="stTabPanel"] {{ padding-top: 6px; }}
+
+[data-testid="stButtonGroup"] [role="radiogroup"], [data-testid="stButtonGroup"] [role="group"] {{
+  display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 12px;
+  background: {PAGE}; border: 1px solid {BORDER}; }}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"] {{
+  border: 0 !important; border-radius: 9px !important; background: transparent; min-height: 32px; padding: 0 14px;
+  color: {INK2}; box-shadow: none !important; transition: background .2s var(--ease), color .2s var(--ease); }}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"] p {{ color: inherit; font-weight: 550; font-size: 13px; }}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"]:hover {{ background: {rgba(INDIGO, .14)}; color: {INK}; }}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"][aria-checked="true"] {{
+  background: linear-gradient(135deg, {INDIGO}, #5a7dff) !important; color: #fff !important;
+  box-shadow: 0 6px 16px -8px {INDIGO} !important; }}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"][aria-checked="true"] p {{ font-weight: 650; }}
+
+/* slim toolbar card for page-level filters: st.container(key="toolbar_*") */
+[class*="st-key-toolbar_"] {{ background: {SURFACE}; border: 1px solid {BORDER}; border-radius: 16px;
+  padding: 12px 16px; margin-top: 8px; gap: 14px !important; animation: fadeUp .5s var(--ease) both; }}
+.tb-label {{ display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: {INK2}; white-space: nowrap; }}
+.tb-label svg {{ color: {INDIGO}; }}
 
 [data-testid="stDownloadButton"] button {{ background: linear-gradient(135deg, {INDIGO}, #5a7dff); border: 0; color: #fff;
   transition: filter .2s var(--ease), transform .2s var(--ease); }}
@@ -395,9 +415,18 @@ def insight_row(items: list[dict], title: str = "Highlights", subtitle: str = "G
     if not items:
         return
     section(title, subtitle, ico, color)
-    for i, (col, it) in enumerate(zip(st.columns(len(items), gap="medium"), items)):
+    for i, (col, it) in enumerate(zip(st.columns(len(items), gap="large"), items)):
         col.markdown(insight_card(it["tone"], it["tag"], it["headline"], it["detail"], delay=i * 0.06),
                      unsafe_allow_html=True)
+
+
+def toolbar(key: str):
+    """A slim horizontal card for page-level filters; use as `with T.toolbar("team"): ...`."""
+    return st.container(key=f"toolbar_{key}", horizontal=True, vertical_alignment="center")
+
+
+def toolbar_label(text: str, ico: str = "sliders") -> None:
+    st.markdown(f'<span class="tb-label">{icon(ico, 15)}{text}</span>', unsafe_allow_html=True)
 
 
 def count(n: int, what: str) -> None:

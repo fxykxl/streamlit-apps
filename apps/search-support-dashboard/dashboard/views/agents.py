@@ -38,8 +38,10 @@ def _body() -> None:
     """Everything below the header; switching team re-runs only this part."""
     ctx = st.session_state["ctx"]
     teams = ["All teams"] + sorted(ctx.agents["team"].unique())
-    team = st.segmented_control("Team", teams, default="All teams", required=True, key="ag_team",
-                                label_visibility="collapsed")
+    with T.toolbar("team"):
+        T.toolbar_label("Team", "users")
+        team = st.segmented_control("Team", teams, default="All teams", required=True, key="ag_team",
+                                    label_visibility="collapsed")
     cases, ses, s = ctx.cases, ctx.ses_agents, ctx.s_agents
     if team != "All teams":
         ids = ctx.agents.loc[ctx.agents["team"] == team, "agent_id"]
