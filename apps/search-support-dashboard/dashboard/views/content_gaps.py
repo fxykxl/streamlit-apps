@@ -1,0 +1,130 @@
+"""Page 3 - content gaps (what are people looking for that we can't answer?)."""
+from __future__ import annotations
+
+import pandas as pd
+import streamlit as st
+
+from .. import charts, metrics
+from .. import theme as T
+from ..components import render_kpis
+
+KPI_SPECS = [
+    dict(key="zero", label="Zero-result rate", kind="pct", better="down", desc="Searches that returned nothing"),
+    dict(key="failed", label="Unresolved sessions", kind="int", better="down", desc="Sessions with no answer found"),
+    dict(key="gap_topics", label="Topics with no article", kind="int", better="down", desc="Demand with no content"),
+    dict(key="cases", label="Cases after failed search", kind="int", better="down", desc="Customers who gave up and wrote in"),
+]
+ACTIONS = {
+    "No article": ("bad", "Write new content", "topics have searches but no article at all."),
+    "Vocabulary mismatch": ("bad", "Add synonyms / retitle", "topics have an article, yet queries return nothing."),
+    "Weak content": ("info", "Rewrite weak articles", "topics get clicks but rarely resolve."),
+}
+
+
+def _kpis(s: pd.DataFrame, ses: pd.DataFrame, tt: pd.DataFrame) -> dict:
+    return dict(zero=metrics._mean(s["zero_result"]), failed=int((~ses["resolved"]).sum()),
+                gap_topics=int(((tt["gap_type"] == "No article")).sum()) if len(tt) else 0,
+                cases=int(ses["case_created"].sum()))
+
+
+def render() -> None:
+    ctx = st.session_state["ctx"]
+    T.page_header("Content gaps",
+                  "What are people searching for that we can't answer, and what should we fix first?", ctx.chips)
+    if ctx.s.empty:
+        st.info("No searches match the current filters.")
+        return
+
+    tt = metrics.topic_table(ctx.s, ctx.ses, ctx.articles, ctx.end)
+    k = _kpis(ctx.s, ctx.ses, tt)
+    pk = None
+    if ctx.has_prev and len(ctx.ps):
+        ptt = metrics.topic_table(ctx.ps, ctx.pses, ctx.articles, ctx.start - pd.Timedelta(days=1))
+        pk = _kpis(ctx.ps, ctx.pses, ptt)
+    render_kpis(KPI_SPECS, k, pk, ctx.prev_label)
+    st.write("")
+
+    # --- recommended actions
+    cols = st.columns(3, gap="small")
+    for col, (gtype, (tone, head, tail)) in zip(cols, ACTIONS.items()):
+        sub = tt[tt["gap_type"] == gtype]
+        failed = int(sub["failed"].sum())
+        col.markdown(T.insight_card(
+            tone, f"Action · {gtype}", f"{head}: {len(sub)} topics, {failed:,} failed sessions",
+            f"{len(sub)} {tail}" if len(sub) else "Nothing to fix in this selection."), unsafe_allow_html=True)
+    st.write("")
+
+    a, b = st.columns([3, 2], gap="medium")
+    with a, st.container(border=True):
+        T.card_title("Unresolved demand map", "Tile size = failed sessions · brighter = higher failure rate")
+        if len(tt):
+            T.show(charts.gap_treemap(tt), key="cg_tree")
+    with b, st.container(border=True):
+        T.card_title("Failed sessions by diagnosis", "Why searches don't resolve")
+        by = tt.groupby("gap_type")["failed"].sum().reindex(
+            ["No article", "Vocabulary mismatch", "Weak content", "Recovered", "Healthy"]).fillna(0)
+        T.show(charts.hbar(by.index, by.values, height=420, hover_unit="failed sessions"), key="cg_type")
+
+    # --- priority table
+    with st.container(border=True):
+        T.card_title("Fix-first list", "Topics ranked by failed sessions. The trend shows weekly failed searches.")
+        f1, f2 = st.columns([3, 2])
+        kinds = f1.multiselect("Diagnosis", ["No article", "Vocabulary mismatch", "Weak content", "Recovered", "Healthy"],
+                               default=["No article", "Vocabulary mismatch", "Weak content"], key="cg_kinds")
+        min_s = f2.slider("Minimum sessions", 0, 300, 40, key="cg_min")
+        d = tt[tt["gap_type"].isin(kinds) & (tt["sessions"] >= min_s)].head(20).copy()
+        if d.empty:
+            st.info("No topics match these filters.")
+        else:
+            weeks = sorted(ctx.s["week"].unique())
+            spark = metrics.topic_weekly(ctx.s, d["topic"].tolist(), weeks)
+            d["trend"] = d["topic"].map(spark)
+            d["success"], d["zero"] = d["success"] * 100, d["zero"] * 100
+            T.show_table(
+                d[["topic", "product_area", "failed", "success", "zero", "articles", "gap_type", "trend"]].rename(columns={
+                    "topic": "Topic", "product_area": "Area", "failed": "Failed sessions", "success": "Resolved",
+                    "zero": "Zero-result", "articles": "Articles", "gap_type": "Diagnosis", "trend": "Weekly trend"}),
+                column_config={
+                    "Failed sessions": st.column_config.NumberColumn(format="%d"),
+                    "Resolved": st.column_config.ProgressColumn(format="%.0f%%", min_value=0, max_value=100),
+                    "Zero-result": st.column_config.NumberColumn(format="%.0f%%"),
+                    "Weekly trend": st.column_config.LineChartColumn(y_min=0),
+                })
+
+    # --- launch story + literal queries
+    c, d2 = st.columns([3, 2], gap="medium")
+    area = "Workflow & Automation"
+    with c, st.container(border=True):
+        T.card_title(f"Demand vs. documentation: {area}",
+                     "New feature launched before its docs: demand arrives immediately, resolution only after publishing.")
+        if (ctx.s["product_area"] == area).sum() > 50:
+            T.show(charts.launch_chart(ctx.s, ctx.ses, area, ctx.events), key="cg_launch")
+        else:
+            st.info(f"No {area} activity in this selection. Widen the period or the product-area filter.")
+    with d2, st.container(border=True):
+        T.card_title("What people typed and got nothing", "Most frequent zero-result queries")
+        zq = metrics.top_zero_queries(ctx.s, 12)
+        if len(zq):
+            T.show(charts.hbar(zq["query_norm"], zq["searches"], height=400, hover_unit="searches"), key="cg_zero")
+
+    # --- weak content
+    with st.container(border=True):
+        T.card_title("Articles that get clicked but don't resolve",
+                     "Only clicks where the article matches the topic searched. Low helpful-vote rate and old updates are the usual suspects.")
+        at = metrics.article_table(ctx.s, ctx.articles, ctx.end)
+        overall = float(ctx.ses["resolved"].mean())
+        w = at[(at["clicks"] >= 40) & (at["resolve_rate"] < overall - 0.10)].sort_values("clicks", ascending=False).head(12)
+        if w.empty:
+            st.info("No weak articles in this selection.")
+        else:
+            w = w.assign(resolve_rate=w["resolve_rate"] * 100, helpful_rate=w["helpful_rate"] * 100)
+            T.show_table(
+                w[["title", "product_area", "clicks", "resolve_rate", "helpful_rate", "age_days"]].rename(columns={
+                    "title": "Article", "product_area": "Area", "clicks": "Clicks", "resolve_rate": "Resolved after click",
+                    "helpful_rate": "Helpful votes", "age_days": "Days since update"}),
+                column_config={
+                    "Clicks": st.column_config.NumberColumn(format="%d"),
+                    "Resolved after click": st.column_config.ProgressColumn(format="%.0f%%", min_value=0, max_value=100),
+                    "Helpful votes": st.column_config.NumberColumn(format="%.0f%%"),
+                    "Days since update": st.column_config.NumberColumn(format="%d"),
+                })
