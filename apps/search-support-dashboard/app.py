@@ -9,7 +9,7 @@ import streamlit as st
 
 ASSETS = Path(__file__).parent / "assets"
 st.set_page_config(page_title="Search & Support Effectiveness", page_icon=str(ASSETS / "icon.svg"), layout="wide",
-                   initial_sidebar_state="expanded")
+                   initial_sidebar_state="auto")  # open on desktop, collapsed on phones
 
 from dashboard import theme as T  # noqa: E402  (after set_page_config)
 from dashboard.data import build_context, load_data  # noqa: E402

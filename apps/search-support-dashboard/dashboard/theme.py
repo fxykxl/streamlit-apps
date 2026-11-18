@@ -165,6 +165,15 @@ header[data-testid="stHeader"] {{ background: {rgba(PAGE, .55)}; backdrop-filter
 [data-testid="stMainBlockContainer"] [class*="st-key-card_"] [data-testid="stVerticalBlock"] {{ row-gap: 1.1rem; }}
 
 
+/* responsive rows: KPI tiles and highlight cards wrap instead of squeezing below a readable width */
+[data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] .kpi),
+[data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] .insight) {{ flex-wrap: wrap; row-gap: 1.25rem; }}
+[data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] .kpi) > [data-testid="stColumn"] {{
+  flex: 1 1 180px !important; min-width: 180px !important; width: auto !important; }}
+[data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] .insight) > [data-testid="stColumn"] {{
+  flex: 1 1 200px !important; min-width: 200px !important; width: auto !important; }}
+.kpi .lbl {{ min-width: 0; }}
+
 /* ---------- motion ---------- */
 @keyframes fadeUp {{ from {{ opacity: 0; transform: translateY(8px); }} to {{ opacity: 1; transform: none; }} }}
 @keyframes pulse {{ 0% {{ box-shadow: 0 0 0 0 {rgba(EMERALD, .55)}; }} 70% {{ box-shadow: 0 0 0 8px {rgba(EMERALD, 0)}; }}
@@ -217,15 +226,15 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
 .sec .s {{ font-size: 13px; color: {MUTED}; }}
 
 /* ---------- KPI cards ---------- */
-.kpi {{ --accent: {INDIGO}; position: relative; overflow: hidden; border-radius: 18px; padding: 18px 18px 16px;
+.kpi {{ --accent: {INDIGO}; position: relative; border-radius: 18px; padding: 18px 18px 16px;
   min-height: 136px; display: flex; flex-direction: column;
-  background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 15%, {SURFACE}) 0%, {SURFACE} 62%);
+  /* accent bar is a background layer (no overflow clipping needed, so tooltips can escape the tile) */
+  background: linear-gradient(90deg, var(--accent), transparent 85%) top left / 100% 3px no-repeat,
+              linear-gradient(155deg, color-mix(in srgb, var(--accent) 15%, {SURFACE}) 0%, {SURFACE} 62%);
   border: 1px solid color-mix(in srgb, var(--accent) 24%, {BORDER});
   box-shadow: inset 0 1px 0 {rgba("#ffffff", .04)};
   transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
   margin-bottom: 10px; animation: fadeUp .5s var(--ease) both; }}
-.kpi::before {{ content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
-  background: linear-gradient(90deg, var(--accent), transparent 85%); }}
 .kpi:hover {{ transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 55%, {BORDER});
   box-shadow: 0 18px 38px -20px var(--accent); }}
 .kpi .top {{ display: flex; align-items: center; gap: 10px; }}
@@ -275,12 +284,16 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
   text-align: left; white-space: normal; box-shadow: 0 16px 34px -14px rgba(0,0,0,.8); pointer-events: none; }}
 .tip:hover .tip-body, .tip:focus .tip-body {{ opacity: 1; visibility: visible; transform: none; }}
 .chead {{ position: relative; z-index: 6; }}
-.chead .tip-body {{ left: 52px; top: calc(100% + 8px); width: max-content; max-width: min(440px, calc(100% - 52px)); }}
-.kpi .tip {{ position: absolute; top: 12px; right: 12px; margin: 0; }}
-.kpi .top {{ padding-right: 18px; }}
-.kpi .tip-body {{ left: 12px; right: 12px; top: 58px; }}
+.chead .tip-body {{ left: 52px; top: calc(100% + 8px); width: max-content; max-width: min(440px, calc(100% - 52px), calc(100vw - 96px)); }}
+.kpi .tip {{ margin: 0 -4px 0 auto; align-self: flex-start; }}
+.kpi .tip-body {{ left: 10px; right: 10px; top: 56px; }}
 .sec {{ position: relative; z-index: 6; }}
-.sec .tip-body {{ left: 40px; top: calc(100% + 8px); width: max-content; max-width: 360px; }}
+.sec .tip-body {{ left: 40px; top: calc(100% + 8px); width: max-content; max-width: min(360px, calc(100vw - 96px)); }}
+/* lift whatever holds an open tooltip above its neighbours (next column, next row, charts) */
+.kpi:hover, .kpi:focus-within {{ z-index: 30; }}
+:is([data-testid="stElementContainer"], [data-testid="stColumn"], [data-testid="stHorizontalBlock"],
+    [data-testid="stVerticalBlock"], [data-testid="stLayoutWrapper"]):has(.tip:hover, .tip:focus) {{
+  position: relative; z-index: 60; }}
 
 /* ---------- insight cards ---------- */
 .insight {{ --accent: {INDIGO}; position: relative; min-height: 172px; margin-bottom: 22px; border-radius: 18px; padding: 18px 18px 16px;
