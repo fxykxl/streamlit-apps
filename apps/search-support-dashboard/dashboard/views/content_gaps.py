@@ -39,7 +39,7 @@ def _fix_first(tt: pd.DataFrame) -> None:
     with T.card("cg_fix"):
         T.card_title("Fix-first list", "Topics ranked by failed sessions. The trend shows weekly failed searches.",
                      "list", T.ROSE)
-        f1, f2 = st.columns([3, 2], gap="medium")
+        f1, f2 = st.columns([3, 2])
         kinds = f1.multiselect("Diagnosis", DIAGNOSES, default=DIAGNOSES[:3], key="cg_kinds")
         min_s = f2.slider("Minimum sessions", 0, 300, 40, step=10, key="cg_min")
         d = tt[tt["gap_type"].isin(kinds) & (tt["sessions"] >= min_s)].head(20).copy()
@@ -80,15 +80,12 @@ def render() -> None:
     render_kpis(KPI_SPECS, k, pk, ctx.prev_label)
 
     # --- recommended actions
-    T.section("Recommended actions", "Grouped by why searches fail", "bulb", T.AMBER)
-    cols = st.columns(3, gap="small")
-    for i, (col, (gtype, (tone, head, tail))) in enumerate(zip(cols, ACTIONS.items())):
+    items = []
+    for gtype, (tone, head, tail) in ACTIONS.items():
         sub = tt[tt["gap_type"] == gtype]
-        failed = int(sub["failed"].sum())
-        col.markdown(T.insight_card(
-            tone, gtype, f"{head}: {len(sub)} topics, {failed:,} failed sessions",
-            f"{len(sub)} {tail}" if len(sub) else "Nothing to fix in this selection.", delay=i * 0.06),
-            unsafe_allow_html=True)
+        items.append(dict(tone=tone, tag=gtype, headline=f"{head}: {len(sub)} topics, {int(sub['failed'].sum()):,} failed sessions",
+                          detail=f"{len(sub)} {tail}" if len(sub) else "Nothing to fix in this selection."))
+    T.insight_row(items, "Recommended actions", "Grouped by why searches fail")
 
     a, b = st.columns([3, 2], gap="medium")
     with a, T.card("cg_tree"):

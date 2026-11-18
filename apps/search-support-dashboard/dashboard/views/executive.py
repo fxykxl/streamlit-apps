@@ -52,13 +52,12 @@ def render() -> None:
     k = metrics.kpis(ctx.s, ctx.ses)
     pk = metrics.kpis(ctx.ps, ctx.pses) if ctx.has_prev else None
     tr_w = metrics.trend(ctx.s, ctx.ses, "Weekly", ctx.start, ctx.end)
+    render_kpis(KPI_SPECS, k, pk, ctx.prev_label)
 
-    sparks = {c: tr_w[c].tolist() for c in ("success", "ctr", "zero", "ttfc") if c in tr_w}
-    cust = ctx.ses[ctx.ses["user_type"] == "Customer"]
-    if len(cust):
-        sparks["self_service"] = (cust.assign(v=cust["resolved"] & ~cust["case_created"])
-                                  .groupby("week")["v"].mean().tolist())
-    render_kpis(KPI_SPECS, k, pk, ctx.prev_label, sparks)
+    tt = metrics.topic_table(ctx.s, ctx.ses, ctx.articles, ctx.end)
+    impact = metrics.case_impact(ctx.cases)
+    at = metrics.agent_table(ctx.ses_agents, ctx.s_agents, ctx.cases, ctx.agents)
+    T.insight_row(metrics.build_insights(ctx, k, tt, tr_w, impact, at), "What the data says")
 
     left, right = st.columns([5, 3], gap="medium")
     with left:
@@ -67,17 +66,7 @@ def render() -> None:
         T.card_title("Where people succeed", "Share of search sessions resolved, by product area", "grid", T.EMERALD)
         T.show(charts.area_bars(metrics.by_area(ctx.ses), k["success"], height=420), key="exec_area")
 
-    tt = metrics.topic_table(ctx.s, ctx.ses, ctx.articles, ctx.end)
-    impact = metrics.case_impact(ctx.cases)
-    at = metrics.agent_table(ctx.ses_agents, ctx.s_agents, ctx.cases, ctx.agents)
-    insights = metrics.build_insights(ctx, k, tt, tr_w, impact, at)
-    if insights:
-        T.section("What the data says", "Generated from the current filters", "sparkles", T.PINK)
-        for i, (col, ins) in enumerate(zip(st.columns(len(insights), gap="small"), insights)):
-            col.markdown(T.insight_card(ins["tone"], ins["tag"], ins["headline"], ins["detail"], delay=i * 0.06),
-                         unsafe_allow_html=True)
-
-    a, b = st.columns([1, 1], gap="medium")
+    a, b = st.columns(2, gap="medium")
     with a, T.card("exec_stuck"):
         T.card_title("Where users get stuck", "Topics with the most unresolved sessions. Full list under Content gaps.",
                      "triangle", T.ROSE)

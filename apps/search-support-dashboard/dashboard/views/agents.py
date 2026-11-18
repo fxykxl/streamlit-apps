@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import streamlit as st
 
-from .. import charts, metrics
+from .. import charts, highlights, metrics
 from .. import theme as T
 from ..components import render_kpis
 
@@ -50,6 +50,7 @@ def _body() -> None:
         return
 
     render_kpis(KPI_SPECS, _summary(at), None, "", None)
+    T.insight_row(highlights.agents_page(at, cases))
 
     a, b = st.columns([5, 3], gap="medium")
     with a, T.card("ag_impact"):

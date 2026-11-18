@@ -49,7 +49,7 @@ ACCENT_CYCLE = [T.INDIGO, T.CYAN, T.ROSE, T.AMBER, T.EMERALD]
 
 def render_kpis(specs: list[dict], k: dict, pk: dict | None, prev_label: str, sparks: dict | None = None) -> None:
     """specs: dicts with key, label, kind, better, desc and optional accent / icon."""
-    cols = st.columns(len(specs), gap="small")
+    cols = st.columns(len(specs), gap="medium")
     for i, (col, sp) in enumerate(zip(cols, specs)):
         accent = sp.get("accent", ACCENT_CYCLE[i % len(ACCENT_CYCLE)])
         v = k.get(sp["key"])

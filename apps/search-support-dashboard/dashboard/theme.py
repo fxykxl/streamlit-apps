@@ -158,8 +158,11 @@ header[data-testid="stHeader"] {{ background: {rgba(PAGE, .55)}; backdrop-filter
 [data-stale="true"], .stale-element {{ opacity: 1 !important; }}
 
 /* breathing room between rows of cards */
-[data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {{ row-gap: 1.1rem; }}
-[data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] {{ column-gap: 1rem; }}
+[data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {{ row-gap: 1.75rem; }}
+/* ...but keep the inside of a card compact */
+[data-testid="stMainBlockContainer"] [class*="st-key-card_"],
+[data-testid="stMainBlockContainer"] [class*="st-key-card_"] [data-testid="stVerticalBlock"] {{ row-gap: .85rem; }}
+
 
 /* ---------- motion ---------- */
 @keyframes fadeUp {{ from {{ opacity: 0; transform: translateY(8px); }} to {{ opacity: 1; transform: none; }} }}
@@ -185,7 +188,7 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
   background: {rgba(INDIGO, .07)}; border: 1px solid {rgba(INDIGO, .18)}; }}
 
 /* ---------- hero ---------- */
-.hero {{ position: relative; overflow: hidden; border-radius: 20px; padding: 24px 28px 20px; margin: 0 0 6px;
+.hero {{ position: relative; overflow: hidden; border-radius: 20px; padding: 24px 28px 20px; margin: 0 0 12px;
   border: 1px solid {rgba(INDIGO, .28)};
   background: linear-gradient(120deg, {rgba(INDIGO, .22)} 0%, {rgba(CYAN, .07)} 55%, {rgba(PINK, .09)} 100%), {SURFACE};
   box-shadow: 0 20px 50px -30px {rgba(INDIGO, .7)}; animation: fadeUp .5s var(--ease) both; }}
@@ -207,19 +210,19 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
   background: {rgba(PAGE, .55)}; }}
 
 /* ---------- section heading ---------- */
-.sec {{ display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 14px 0 2px; }}
+.sec {{ display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 10px 0 -8px; }}
 .sec .ico {{ width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; }}
 .sec .t {{ font-size: 18px; font-weight: 750; color: {INK}; letter-spacing: -.01em; }}
 .sec .s {{ font-size: 13px; color: {MUTED}; }}
 
 /* ---------- KPI cards ---------- */
-.kpi {{ --accent: {INDIGO}; position: relative; overflow: hidden; border-radius: 16px; padding: 16px 16px 14px;
-  min-height: 168px; display: flex; flex-direction: column;
+.kpi {{ --accent: {INDIGO}; position: relative; overflow: hidden; border-radius: 18px; padding: 18px 18px 16px;
+  min-height: 150px; display: flex; flex-direction: column;
   background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 15%, {SURFACE}) 0%, {SURFACE} 62%);
   border: 1px solid color-mix(in srgb, var(--accent) 24%, {BORDER});
   box-shadow: inset 0 1px 0 {rgba("#ffffff", .04)};
   transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
-  margin-bottom: 6px; animation: fadeUp .5s var(--ease) both; }}
+  margin-bottom: 10px; animation: fadeUp .5s var(--ease) both; }}
 .kpi::before {{ content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
   background: linear-gradient(90deg, var(--accent), transparent 85%); }}
 .kpi:hover {{ transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 55%, {BORDER});
@@ -246,7 +249,7 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
 /* ---------- content cards: st.container(key="card_*") ---------- */
 [class*="st-key-card_"] {{
   background: linear-gradient(180deg, {rgba("#ffffff", .025)}, {rgba("#ffffff", 0)} 40%), {SURFACE};
-  border: 1px solid {BORDER}; border-radius: 16px; padding: 18px 20px 16px;
+  border: 1px solid {BORDER}; border-radius: 18px; padding: 22px 24px 20px;
   box-shadow: inset 0 1px 0 {rgba("#ffffff", .035)}, 0 14px 34px -22px rgba(0,0,0,.8);
   transition: border-color .25s var(--ease), box-shadow .25s var(--ease);
   animation: fadeUp .55s var(--ease) both; }}
@@ -258,7 +261,7 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
 .chead .csub {{ font-size: 12.5px; color: {MUTED}; margin: 3px 0 0; line-height: 1.45; }}
 
 /* ---------- insight cards ---------- */
-.insight {{ --accent: {INDIGO}; position: relative; min-height: 178px; border-radius: 16px; padding: 16px 16px 14px;
+.insight {{ --accent: {INDIGO}; position: relative; min-height: 172px; margin-bottom: 12px; border-radius: 18px; padding: 18px 18px 16px;
   background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 16%, {SURFACE}) 0%, {SURFACE} 70%);
   border: 1px solid color-mix(in srgb, var(--accent) 26%, {BORDER});
   transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
@@ -384,6 +387,17 @@ def insight_card(tone: str, tag: str, headline: str, detail: str, delay: float =
     return (f'<div class="insight" style="--accent:{color};animation-delay:{delay:.2f}s">'
             f'<span class="tag">{icon(ico, 12, stroke=2.4)}{tag}</span>'
             f'<div class="h">{headline}</div><div class="d">{detail}</div></div>')
+
+
+def insight_row(items: list[dict], title: str = "Highlights", subtitle: str = "Generated from the current filters",
+                ico: str = "bulb", color: str = AMBER) -> None:
+    """Section heading plus a row of insight cards (the Content gaps pattern, shared by every page)."""
+    if not items:
+        return
+    section(title, subtitle, ico, color)
+    for i, (col, it) in enumerate(zip(st.columns(len(items), gap="medium"), items)):
+        col.markdown(insight_card(it["tone"], it["tag"], it["headline"], it["detail"], delay=i * 0.06),
+                     unsafe_allow_html=True)
 
 
 def count(n: int, what: str) -> None:

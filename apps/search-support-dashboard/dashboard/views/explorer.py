@@ -7,7 +7,20 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from .. import highlights
 from .. import theme as T
+from ..components import render_kpis
+
+KPI_SPECS = [
+    dict(key="queries", label="Distinct queries", kind="int", better="neutral", desc="Unique normalised queries",
+         accent=T.INDIGO, icon="search"),
+    dict(key="dead", label="Dead-end queries", kind="int", better="down", desc="5+ searches, return nothing half the time",
+         accent=T.ROSE, icon="search_x"),
+    dict(key="results", label="Results per search", kind="int", better="neutral", desc="Median results returned",
+         accent=T.CYAN, icon="list"),
+    dict(key="multi", label="Multi-search sessions", kind="pct", better="down", desc="Sessions needing 3+ searches",
+         accent=T.AMBER, icon="repeat"),
+]
 
 ZERO, NOCLICK, CLICKED, RESOLVED = "Zero results", "No click", "Clicked, not resolved", "Resolved"
 OUTCOME_STYLE = {ZERO: (T.ROSE, "search_x"), NOCLICK: (T.AMBER, "alert"),
@@ -153,6 +166,11 @@ def render() -> None:
     names = ctx.agents.set_index("agent_id")["name"]
     titles = ctx.articles.set_index("article_id")["title"]
     s = _with_outcome(ctx.s)
+
+    k = highlights.explorer_kpis(ctx.s, ctx.ses)
+    pk = highlights.explorer_kpis(ctx.ps, ctx.pses) if ctx.has_prev and len(ctx.ps) else None
+    render_kpis(KPI_SPECS, k, pk, ctx.prev_label)
+    T.insight_row(highlights.explorer_page(ctx.s))
 
     tab1, tab2, tab3 = st.tabs([":material/leaderboard: Top queries", ":material/list_alt: Search log",
                                 ":material/replay: Session replay"])

@@ -15,7 +15,9 @@ from plotly.subplots import make_subplots
 from . import theme as T
 from .theme import rgba
 
-USER_COLORS = {"Agent": T.INDIGO, "Customer": T.AMBER}
+USER_COLORS = {"Agent": T.INDIGO, "Customer": T.CYAN}
+INDIGO_DEEP = "#3f3699"
+INDIGO_SOFT = "#a59bff"
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
@@ -24,7 +26,7 @@ def _scale(colors: list[str]) -> list[list]:
     return [[i / n, c] for i, c in enumerate(colors)]
 
 
-COOL = _scale(T.RAMP_COOL)
+COOL = _scale(["#1a1f45", "#2c2a6e", "#4a40b0", "#7c6cff", "#b9b0ff"])
 HEAT = _scale(T.RAMP_HEAT)
 RYG = _scale([T.ROSE, T.ORANGE, T.AMBER, "#a3d977", T.EMERALD])
 DIV = _scale(T.DIVERGING)
@@ -101,7 +103,8 @@ def add_events(fig: go.Figure, events: pd.DataFrame, x0, x1, labels: bool = True
 
 # ------------------------------------------------------------------ executive
 def trend_chart(tr: pd.DataFrame, metric: str, events: pd.DataFrame, freq: str, height: int = 370) -> go.Figure:
-    col, hover, tick, zero, color = METRICS[metric]
+    col, hover, tick, zero, _ = METRICS[metric]
+    color = T.INDIGO
     fig = go.Figure()
     many = len(tr) > 60
     when = "Week of %{x|%b %d}" if freq == "Weekly" else "%{x|%a, %b %d}"
@@ -125,7 +128,7 @@ def area_bars(df: pd.DataFrame, avg: float, height: int = 370) -> go.Figure:
     d = df.sort_values("success")  # worst first -> top once the axis is reversed
     fig = go.Figure(go.Bar(
         x=d["success"], y=d["product_area"], orientation="h",
-        marker=dict(color=d["success"], colorscale=RYG, cmin=avg - 0.12, cmax=avg + 0.08, line=dict(width=0)),
+        marker=dict(color=[T.ROSE if v < avg - 0.03 else T.INDIGO for v in d["success"]], line=dict(width=0)),
         text=[f"{v:.0%}" for v in d["success"]], textposition="outside", cliponaxis=False,
         textfont=dict(color=T.INK, size=12), customdata=np.stack([d["sessions"], (d["success"] - avg) * 100], axis=-1),
         hovertemplate="<b>%{y}</b><br>%{x:.1%} resolved (%{customdata[1]:+.1f} pts vs overall)"
@@ -141,7 +144,7 @@ def area_bars(df: pd.DataFrame, avg: float, height: int = 370) -> go.Figure:
 
 def impact_chart(imp: pd.DataFrame, height: int = 300) -> go.Figure:
     names = {True: "Answer found", False: "No answer found"}
-    colors = {True: T.EMERALD, False: T.ROSE}
+    colors = {True: T.INDIGO, False: T.ROSE}
     specs = [("res_hours", "Median hours to resolve", "{:.0f} h"), ("escalation", "Escalation rate", "{:.0%}"),
              ("csat", "Average CSAT (1–5)", "{:.2f}")]
     fig = make_subplots(rows=1, cols=3, subplot_titles=[s[1] for s in specs], horizontal_spacing=0.08)
@@ -173,8 +176,8 @@ def funnel_chart(f: dict, height: int = 340) -> go.Figure:
     vals = [f["searches"], f["results"], f["clicked"], f["resolved"]]
     fig = go.Figure(go.Funnel(
         y=stages, x=vals, texttemplate="<b>%{value:,.0f}</b><br>%{percentInitial:.0%}", textposition="inside",
-        textfont=dict(color="#0a0e1a", size=13, family=T.FONT), opacity=0.95,
-        marker=dict(color=[T.INDIGO, T.SKY, T.CYAN, T.EMERALD], line=dict(width=0)),
+        textfont=dict(color="#ffffff", size=13, family=T.FONT),
+        marker=dict(color=gradient(4, T.INDIGO, INDIGO_DEEP), line=dict(width=0)),
         connector=dict(line=dict(color=T.GRID, width=1), fillcolor=rgba(T.INDIGO, 0.10)),
         hovertemplate="<b>%{y}</b><br>%{x:,.0f} searches · %{percentInitial:.1%} of all<extra></extra>"))
     style(fig, height=height, left=0)
@@ -211,7 +214,7 @@ def ttfc_distribution(s: pd.DataFrame, height: int = 340) -> go.Figure:
 
 def position_bars(pos: pd.DataFrame, height: int = 340) -> go.Figure:
     fig = go.Figure(go.Bar(
-        x=pos["label"], y=pos["share"], marker=dict(color=gradient(len(pos), T.INDIGO, T.CYAN), line=dict(width=0)),
+        x=pos["label"], y=pos["share"], marker=dict(color=gradient(len(pos), T.INDIGO, INDIGO_DEEP), line=dict(width=0)),
         text=[f"{v:.0%}" if v >= 0.005 else "" for v in pos["share"]], textposition="outside", cliponaxis=False,
         textfont=dict(color=T.INK, size=12),
         hovertemplate="Position %{x}<br><b>%{y:.1%}</b> of clicks<extra></extra>"))
@@ -224,10 +227,10 @@ def position_bars(pos: pd.DataFrame, height: int = 340) -> go.Figure:
 def latency_chart(tr: pd.DataFrame, events: pd.DataFrame, height: int = 340) -> go.Figure:
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=tr["bucket"], y=tr["p50"], mode="lines", name="Median",
-                             line=dict(color=T.CYAN, width=2.4),
+                             line=dict(color=T.INDIGO, width=2.4),
                              hovertemplate="Median · <b>%{y:,.0f} ms</b><extra></extra>"))
     fig.add_trace(go.Scatter(x=tr["bucket"], y=tr["p95"], mode="lines", name="95th percentile",
-                             line=dict(color=T.PINK, width=2.4), fill="tonexty", fillcolor=rgba(T.PINK, 0.08),
+                             line=dict(color=T.ROSE, width=2.2), fill="tonexty", fillcolor=rgba(T.ROSE, 0.07),
                              hovertemplate="p95 · <b>%{y:,.0f} ms</b><extra></extra>"))
     style(fig, height=height, legend=True, hover="x unified", top=44)
     fig.update_layout(legend=dict(y=-0.1, yanchor="top", x=0.5, xanchor="center"), margin=dict(b=10))
@@ -254,10 +257,10 @@ def heatmap(pv: pd.DataFrame, height: int = 340) -> go.Figure:
 
 def searches_per_session(g: pd.DataFrame, height: int = 340) -> go.Figure:
     fig = go.Figure()
-    for name, col, color in (("Found an answer", "found", T.EMERALD), ("Gave up / no answer", "gave_up", T.ROSE)):
+    for name, col, color in (("Found an answer", "found", T.INDIGO), ("Gave up / no answer", "gave_up", T.ROSE)):
         fig.add_trace(go.Bar(x=g["label"], y=g[col], name=name, marker=dict(color=color, line=dict(color=T.SURFACE, width=2)),
                              texttemplate="%{y:.0%}", textposition="inside", insidetextanchor="middle",
-                             textfont=dict(color="#0a0e1a", size=12),
+                             textfont=dict(color="#ffffff", size=12),
                              hovertemplate=f"{name}<br>%{{x}}: <b>%{{y:.1%}}</b> of sessions<extra></extra>"))
     style(fig, height=height, legend=True, top=34)
     fig.update_layout(barmode="stack", legend=dict(traceorder="normal"))
@@ -361,7 +364,7 @@ def agent_facets(at: pd.DataFrame, height: int = 540) -> go.Figure:
     fig.update_yaxes(tickformat=".0%", showgrid=True)
     fig.update_xaxes(ticksuffix="s", showgrid=True, gridcolor=T.GRID, griddash="dot")
     for k, a in enumerate(fig.layout.annotations):
-        a.font = dict(size=12.5, color=TEAM_COLORS[k % len(TEAM_COLORS)])
+        a.font = dict(size=12.5, color=T.INK)
     fig.add_hline(y=float(at["success"].median()), line_dash="dot", line_color=T.AXIS, row="all", col="all")
     return fig
 
@@ -369,7 +372,7 @@ def agent_facets(at: pd.DataFrame, height: int = 540) -> go.Figure:
 def tenure_bars(tc: pd.DataFrame, height: int = 300) -> go.Figure:
     fig = go.Figure(go.Bar(
         x=tc["tenure_band"].astype(str), y=tc["success"],
-        marker=dict(color=gradient(len(tc), T.VIOLET, T.CYAN), line=dict(width=0)),
+        marker=dict(color=gradient(len(tc), INDIGO_DEEP, INDIGO_SOFT), line=dict(width=0)),
         customdata=np.stack([tc["agents"], tc["sessions"]], axis=-1),
         text=[f"{v:.0%}" for v in tc["success"]], textposition="outside", cliponaxis=False,
         textfont=dict(color=T.INK, size=12),

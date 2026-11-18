@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from .. import charts, metrics
+from .. import charts, highlights, metrics
 from .. import theme as T
 from ..components import render_kpis
 
@@ -34,6 +34,10 @@ def render() -> None:
     pk = metrics.kpis(ctx.ps, ctx.pses) if ctx.has_prev else None
     render_kpis(KPI_SPECS, k, pk, ctx.prev_label)
 
+    daily = metrics.trend(ctx.s, ctx.ses, "Daily")
+    pos = metrics.click_positions(ctx.s)
+    T.insight_row(highlights.search_page(ctx.s, ctx.ses, daily, pos, ctx.events))
+
     a, b = st.columns(2, gap="medium")
     with a, T.card("sp_funnel"):
         T.card_title("Search funnel", "From query to a resolving click", "funnel", T.INDIGO)
@@ -46,10 +50,10 @@ def render() -> None:
     with c, T.card("sp_latency"):
         T.card_title("Response time", "Daily median and 95th percentile; spikes line up with index or release events",
                      "zap", T.PINK)
-        T.show(charts.latency_chart(metrics.trend(ctx.s, ctx.ses, "Daily"), ctx.events), key="sp_latency")
+        T.show(charts.latency_chart(daily, ctx.events), key="sp_latency")
     with d, T.card("sp_pos"):
         T.card_title("Where people click", "Share of clicks by result rank", "pointer", T.CYAN)
-        T.show(charts.position_bars(metrics.click_positions(ctx.s)), key="sp_pos")
+        T.show(charts.position_bars(pos), key="sp_pos")
 
     e, f = st.columns([3, 2], gap="medium")
     with e, T.card("sp_heat"):
