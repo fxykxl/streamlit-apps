@@ -55,9 +55,10 @@ def render_kpis(specs: list[dict], k: dict, pk: dict | None, prev_label: str, sp
         v = k.get(sp["key"])
         val, unit = fmt_value(sp["kind"], v)
         txt, tone = delta(sp["kind"], v, pk.get(sp["key"]) if pk else None, sp["better"])
-        foot = f"vs {prev_label}" if txt else sp["desc"]
+        foot = f"vs {prev_label}" if txt else ""
         spark = ""
         if sparks and sp["key"] in sparks:
             spark = T.sparkline(sparks[sp["key"]], accent)
         col.markdown(T.kpi_card(sp["label"], val, unit, txt, tone, foot, spark, accent=accent,
-                                ico=sp.get("icon", "activity"), delay=i * 0.05), unsafe_allow_html=True)
+                                ico=sp.get("icon", "activity"), delay=i * 0.05, info=sp["desc"]),
+                    unsafe_allow_html=True)

@@ -8,6 +8,7 @@ which differ strongly in lightness as well as hue, so they also read for colour-
 from __future__ import annotations
 
 import hashlib
+import html as _html
 
 import streamlit as st
 
@@ -217,7 +218,7 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
 
 /* ---------- KPI cards ---------- */
 .kpi {{ --accent: {INDIGO}; position: relative; overflow: hidden; border-radius: 18px; padding: 18px 18px 16px;
-  min-height: 150px; display: flex; flex-direction: column;
+  min-height: 136px; display: flex; flex-direction: column;
   background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 15%, {SURFACE}) 0%, {SURFACE} 62%);
   border: 1px solid color-mix(in srgb, var(--accent) 24%, {BORDER});
   box-shadow: inset 0 1px 0 {rgba("#ffffff", .04)};
@@ -231,7 +232,7 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
 .kpi .ico {{ flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
   color: var(--accent); background: color-mix(in srgb, var(--accent) 17%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); }}
-.kpi .lbl {{ font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: {INK2}; font-weight: 650;
+.kpi .lbl {{ font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: {INK2}; font-weight: 650;
   line-height: 1.3; }}
 .kpi .mid {{ display: flex; align-items: center; justify-content: space-between; gap: 6px; margin: 12px 0 8px; }}
 .kpi .val {{ font-size: 32px; font-weight: 780; color: {INK}; letter-spacing: -.025em; line-height: 1.1;
@@ -255,10 +256,30 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
   animation: fadeUp .55s var(--ease) both; }}
 [class*="st-key-card_"]:hover {{ border-color: {rgba(INDIGO, .38)};
   box-shadow: inset 0 1px 0 {rgba("#ffffff", .05)}, 0 20px 44px -24px {rgba(INDIGO, .55)}; }}
-.chead {{ display: flex; align-items: flex-start; gap: 12px; }}
+.chead {{ display: flex; align-items: center; gap: 12px; }}
 .chead .ico {{ flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; }}
 .chead .ctitle {{ font-size: 15.5px; font-weight: 700; color: {INK}; margin: 0; line-height: 1.3; letter-spacing: -.005em; }}
 .chead .csub {{ font-size: 12.5px; color: {MUTED}; margin: 3px 0 0; line-height: 1.45; }}
+
+/* ---------- info tooltips ---------- */
+.tip {{ display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; margin-left: 6px;
+  vertical-align: -4px; color: {MUTED}; cursor: help; outline: none; flex: none;
+  transition: color .2s var(--ease), background .2s var(--ease), box-shadow .2s var(--ease); }}
+.tip:hover, .tip:focus {{ color: {INK}; background: {rgba(INDIGO, .2)}; }}
+.tip:focus-visible {{ box-shadow: 0 0 0 2px {INDIGO}; }}
+.tip-body {{ position: absolute; z-index: 40; opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity .18s var(--ease), transform .18s var(--ease), visibility .18s;
+  background: {HOVER_BG}; border: 1px solid {AXIS}; border-radius: 10px; padding: 10px 12px;
+  color: {INK2}; font-size: 12.5px; font-weight: 450; line-height: 1.5; letter-spacing: 0; text-transform: none;
+  text-align: left; white-space: normal; box-shadow: 0 16px 34px -14px rgba(0,0,0,.8); pointer-events: none; }}
+.tip:hover .tip-body, .tip:focus .tip-body {{ opacity: 1; visibility: visible; transform: none; }}
+.chead {{ position: relative; z-index: 6; }}
+.chead .tip-body {{ left: 46px; top: calc(100% + 8px); width: max-content; max-width: min(440px, calc(100% - 46px)); }}
+.kpi .tip {{ position: absolute; top: 12px; right: 12px; margin: 0; }}
+.kpi .top {{ padding-right: 18px; }}
+.kpi .tip-body {{ left: 12px; right: 12px; top: 58px; }}
+.sec {{ position: relative; z-index: 6; }}
+.sec .tip-body {{ left: 40px; top: calc(100% + 8px); width: max-content; max-width: 360px; }}
 
 /* ---------- insight cards ---------- */
 .insight {{ --accent: {INDIGO}; position: relative; min-height: 172px; margin-bottom: 22px; border-radius: 18px; padding: 18px 18px 16px;
@@ -291,7 +312,7 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
   display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 12px;
   background: {PAGE}; border: 1px solid {BORDER}; }}
 [data-testid="stButtonGroup"] button[data-variant="segmented_control"] {{
-  border: 0 !important; border-radius: 9px !important; background: transparent; min-height: 32px; padding: 0 14px;
+  border: 0 !important; border-radius: 9px !important; background: transparent; min-height: 32px; padding: 0 12px;
   color: {INK2}; box-shadow: none !important; transition: background .2s var(--ease), color .2s var(--ease); }}
 [data-testid="stButtonGroup"] button[data-variant="segmented_control"] p {{ color: inherit; font-weight: 550; font-size: 13px; }}
 [data-testid="stButtonGroup"] button[data-variant="segmented_control"]:hover {{ background: {rgba(INDIGO, .14)}; color: {INK}; }}
@@ -349,8 +370,17 @@ def page_header(title: str, subtitle: str, chips: list[str] | None = None,
     st.markdown(html + "</div>", unsafe_allow_html=True)
 
 
+def info_tip(text: str) -> str:
+    """Small (i) icon that reveals `text` on hover, keyboard focus or tap."""
+    if not text:
+        return ""
+    t = _html.escape(text, quote=True)
+    return (f'<span class="tip" tabindex="0" role="button" aria-label="{t}">{icon("info", 15)}'
+            f'<span class="tip-body" role="tooltip">{t}</span></span>')
+
+
 def section(title: str, subtitle: str = "", ico: str = "sparkles", color: str = INDIGO) -> None:
-    sub = f'<span class="s">{subtitle}</span>' if subtitle else ""
+    sub = info_tip(subtitle)
     st.markdown(f'<div class="sec"><span class="ico" style="background:{rgba(color, .16)};color:{color}">'
                 f'{icon(ico, 16)}</span><span class="t">{title}</span>{sub}</div>', unsafe_allow_html=True)
 
@@ -361,10 +391,9 @@ def card(key: str):
 
 
 def card_title(title: str, subtitle: str = "", ico: str = "bar", color: str = INDIGO) -> None:
-    sub = f'<p class="csub">{subtitle}</p>' if subtitle else ""
     st.markdown(f'<div class="chead"><span class="ico" style="background:{rgba(color, .15)};color:{color};'
                 f'border:1px solid {rgba(color, .3)}">{icon(ico, 17)}</span>'
-                f'<div><p class="ctitle">{title}</p>{sub}</div></div>', unsafe_allow_html=True)
+                f'<p class="ctitle">{title}{info_tip(subtitle)}</p></div>', unsafe_allow_html=True)
 
 
 def sparkline(values, color: str = INDIGO, w: int = 92, h: int = 36) -> str:
@@ -388,7 +417,7 @@ def sparkline(values, color: str = INDIGO, w: int = 92, h: int = 36) -> str:
 
 
 def kpi_card(label: str, value: str, unit: str = "", delta: str = "", tone: str = "flat", foot: str = "",
-             spark: str = "", accent: str = INDIGO, ico: str = "activity", delay: float = 0) -> str:
+             spark: str = "", accent: str = INDIGO, ico: str = "activity", delay: float = 0, info: str = "") -> str:
     d = ""
     if delta:
         arrow = "" if tone == "flat" else icon("trend_down" if delta.lstrip().startswith("-") else "trend_up", 13, stroke=2.4)
@@ -396,7 +425,7 @@ def kpi_card(label: str, value: str, unit: str = "", delta: str = "", tone: str 
     u = f'<span class="unit">{unit}</span>' if unit else ""
     f = f'<div class="foot">{foot}</div>' if foot else ""
     return (f'<div class="kpi" style="--accent:{accent};animation-delay:{delay:.2f}s">'
-            f'<div class="top"><span class="ico">{icon(ico, 17)}</span><span class="lbl">{label}</span></div>'
+            f'<div class="top"><span class="ico">{icon(ico, 17)}</span><span class="lbl">{label}</span>{info_tip(info)}</div>'
             f'<div class="mid"><div class="val">{value}{u}</div>{spark}</div>'
             f'<div class="bottom">{d}{f}</div></div>')
 

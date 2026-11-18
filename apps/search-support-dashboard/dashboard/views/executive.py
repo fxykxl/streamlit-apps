@@ -28,11 +28,11 @@ def _trend_card() -> None:
     with T.card("exec_trend"):
         T.card_title("Search performance over time",
                      "Shaded bands mark incidents, releases and content launches.", "activity", T.INDIGO)
-        c1, c2 = st.columns([4, 1.4], vertical_alignment="center")
-        with c1:
+        short = {"Success rate": "Success", "Click-through": "CTR", "Zero-result rate": "Zero results",
+                 "Time to first click": "Time to click", "Search volume": "Volume"}
+        with st.container(horizontal=True, horizontal_alignment="distribute", vertical_alignment="center"):
             metric = st.segmented_control("Metric", list(charts.METRICS), default="Success rate", required=True,
-                                          label_visibility="collapsed", key="exec_metric")
-        with c2:
+                                          format_func=short.get, label_visibility="collapsed", key="exec_metric")
             freq = st.segmented_control("Granularity", ["Weekly", "Daily"], default="Weekly", required=True,
                                         label_visibility="collapsed", key="exec_freq")
         tr = metrics.trend(ctx.s, ctx.ses, freq, ctx.start, ctx.end) if freq == "Weekly" \
