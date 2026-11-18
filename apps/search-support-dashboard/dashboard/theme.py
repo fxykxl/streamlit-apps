@@ -162,7 +162,7 @@ header[data-testid="stHeader"] {{ background: {rgba(PAGE, .55)}; backdrop-filter
 [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {{ row-gap: 1.75rem; }}
 /* ...but keep the inside of a card compact */
 [data-testid="stMainBlockContainer"] [class*="st-key-card_"],
-[data-testid="stMainBlockContainer"] [class*="st-key-card_"] [data-testid="stVerticalBlock"] {{ row-gap: .85rem; }}
+[data-testid="stMainBlockContainer"] [class*="st-key-card_"] [data-testid="stVerticalBlock"] {{ row-gap: 1.1rem; }}
 
 
 /* ---------- motion ---------- */
@@ -250,14 +250,15 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
 /* ---------- content cards: st.container(key="card_*") ---------- */
 [class*="st-key-card_"] {{
   background: linear-gradient(180deg, {rgba("#ffffff", .025)}, {rgba("#ffffff", 0)} 40%), {SURFACE};
-  border: 1px solid {BORDER}; border-radius: 18px; padding: 22px 24px 20px;
+  border: 1px solid {BORDER}; border-radius: 18px; padding: 26px 28px 24px;
   box-shadow: inset 0 1px 0 {rgba("#ffffff", .035)}, 0 14px 34px -22px rgba(0,0,0,.8);
   transition: border-color .25s var(--ease), box-shadow .25s var(--ease);
   animation: fadeUp .55s var(--ease) both; }}
 [class*="st-key-card_"]:hover {{ border-color: {rgba(INDIGO, .38)};
   box-shadow: inset 0 1px 0 {rgba("#ffffff", .05)}, 0 20px 44px -24px {rgba(INDIGO, .55)}; }}
-.chead {{ display: flex; align-items: center; gap: 12px; }}
-.chead .ico {{ flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; }}
+.chead {{ display: flex; align-items: center; gap: 14px; padding-bottom: 16px; margin-bottom: 6px;
+  border-bottom: 1px solid {rgba('#ffffff', .05)}; }}
+.chead .ico {{ flex: none; width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; }}
 .chead .ctitle {{ font-size: 15.5px; font-weight: 700; color: {INK}; margin: 0; line-height: 1.3; letter-spacing: -.005em; }}
 .chead .csub {{ font-size: 12.5px; color: {MUTED}; margin: 3px 0 0; line-height: 1.45; }}
 
@@ -274,7 +275,7 @@ section[data-testid="stSidebar"] {{ background: linear-gradient(180deg, #10163a 
   text-align: left; white-space: normal; box-shadow: 0 16px 34px -14px rgba(0,0,0,.8); pointer-events: none; }}
 .tip:hover .tip-body, .tip:focus .tip-body {{ opacity: 1; visibility: visible; transform: none; }}
 .chead {{ position: relative; z-index: 6; }}
-.chead .tip-body {{ left: 46px; top: calc(100% + 8px); width: max-content; max-width: min(440px, calc(100% - 46px)); }}
+.chead .tip-body {{ left: 52px; top: calc(100% + 8px); width: max-content; max-width: min(440px, calc(100% - 52px)); }}
 .kpi .tip {{ position: absolute; top: 12px; right: 12px; margin: 0; }}
 .kpi .top {{ padding-right: 18px; }}
 .kpi .tip-body {{ left: 12px; right: 12px; top: 58px; }}

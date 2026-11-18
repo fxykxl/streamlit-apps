@@ -113,7 +113,7 @@ def trend_chart(tr: pd.DataFrame, metric: str, events: pd.DataFrame, freq: str, 
               marker=dict(size=7, color=color, line=dict(color=T.SURFACE, width=2)),
               hovertemplate=f"{when}<br><b>{hover}</b><extra></extra>")
     fig.add_trace(go.Scatter(**_area_fill(kw, color)))
-    style(fig, height=height, hover="x", top=46)
+    style(fig, height=height, hover="x", top=62)
     vals = tr[col].dropna()
     if zero or vals.empty:
         fig.update_yaxes(rangemode="tozero", tickformat=tick)
